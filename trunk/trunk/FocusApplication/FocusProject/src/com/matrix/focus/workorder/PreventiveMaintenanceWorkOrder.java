@@ -1,0 +1,221 @@
+package com.matrix.focus.workorder;
+
+
+import com.matrix.focus.util.Utilities;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Calendar;
+import java.util.Properties;
+
+public class PreventiveMaintenanceWorkOrder {
+    
+    public String workorder_id;
+    public String type;
+    public String category;
+    public String created_date;
+    public String promised_date;
+    public String started_date;
+    public String done_date;
+    public String total_cost; 
+    public String remarks;
+    public String customer;
+    public String customer_id;
+    public String asset_id;
+    public String model;
+    public String description; 
+    public String creater;
+        
+    private Connection connection;
+ 
+    public PreventiveMaintenanceWorkOrder(Connection con) {
+        connection = con;
+        type = "";
+        category = "";
+        asset_id = "";
+        customer_id = "";
+        created_date = "Now";
+        promised_date = "0000-00-00"; 
+        started_date = "0000-00-00 00:00:00"; 
+        done_date = "0000-00-00 00:00:00";
+        total_cost = "0.00";
+        remarks = "None";
+        description = "";
+    }
+    
+    public PreventiveMaintenanceWorkOrder(String workorder_id, Connection con) throws Exception{
+        connection = con;
+        this.workorder_id = workorder_id;
+        read();
+    }
+    
+    public void save() throws Exception{
+        this.workorder_id = getNewWorkOrderNo();
+        String sql = "INSERT INTO preventive_maintenance_work_order (PM_Work_Order_ID, Division_ID, type, category, Created_Date, creater) VALUES(?, '0', ?, ?, NOW(),?)";
+    
+        PreparedStatement stmt = connection.prepareStatement(sql);
+        stmt.setString(1,workorder_id);
+        stmt.setString(2,type);
+        stmt.setString(3,category);
+        stmt.setString(4,creater);
+    
+        if(stmt.executeUpdate()!=1){
+            throw new Exception("Job creation error.");
+        }
+    }
+    
+    public void update() throws Exception{
+        String sql = "UPDATE preventive_maintenance_work_order SET " +
+                            "Asset_ID = ?, " +
+                            "Division_ID = ?, " +
+                            "Promised_Date = ?, " +
+                            "Started_Date = ?, " +
+                            "Done_Date = ?, " +
+                            "Total_Cost = ?, " +
+                            "Description = ?, " +
+                            "Type = ?, " +
+                            "category = ?, " +
+                            "remarks = ? " +
+                            "WHERE PM_Work_Order_ID =?";
+    
+        PreparedStatement stmt = connection.prepareStatement(sql);
+        
+        stmt.setString(1,asset_id);
+        stmt.setString(2,customer_id);
+        stmt.setString(3,(promised_date.isEmpty()?"0000-00-00":promised_date));
+        stmt.setString(4,started_date);
+        stmt.setString(5,done_date);
+        stmt.setString(6,total_cost);
+        stmt.setString(7,description);
+        stmt.setString(8,type);
+        stmt.setString(9,category);
+        stmt.setString(10,remarks);
+        stmt.setString(11,workorder_id);
+        if(stmt.executeUpdate()!=1){
+            throw new Exception("Job updating error.");
+        }
+    }
+    
+    public void log()throws Exception{
+        this.update();    
+    }
+    
+    public void delete() throws Exception{
+        String sql = "DELETE FROM preventive_maintenance_work_order WHERE PM_Work_Order_ID=?";
+        PreparedStatement stmt = connection.prepareStatement(sql);
+        stmt.setString(1,workorder_id);
+      
+        if(stmt.executeUpdate()!=1){
+            throw new Exception("Job deletion error.");
+        } 
+    }
+    
+    private void read() throws Exception{
+        String sql = "SELECT " + 
+        "  PM_Work_Order_ID, " + 
+        "  WO.Asset_ID, " + 
+        "  Created_Date, " +
+        "  Creater, " + 
+        "  Promised_Date, " + 
+        "  Started_Date, " + 
+        "  Done_Date, " + 
+        "  Total_Cost, " + 
+        "  Customer, " + 
+        "  Remarks, " + 
+        "  WO.Division_ID, " + 
+        "  WO.Description, " + 
+        "  WO.type, " + 
+        "  WO.category, " + 
+        "  A.model_id " + 
+        "FROM " + 
+        "  ( " + 
+        "  SELECT " + 
+        "    w.PM_Work_Order_ID, " + 
+        "    w.Division_ID, " + 
+        "    d.Name AS Customer, " + 
+        "    w.Asset_ID, " + 
+        "    DATE(w.Created_Date) Created_Date, " +
+        "    w.Creater, " + 
+        "    IF(w.Promised_Date='0000-00-00','0000-00-00',w.Promised_Date) AS Promised_Date, " + 
+        "    IF(w.Started_Date='0000-00-00 00:00:00','0000-00-00 00:00:00',w.Started_Date) AS Started_Date, " + 
+        "    IF(w.Done_Date='0000-00-00 00:00:00','0000-00-00 00:00:00',w.Done_Date) AS Done_Date, " + 
+        "    w.Total_Cost, " + 
+        "    w.Remarks, " + 
+        "    w.Description, " + 
+        "    w.type, " + 
+        "    w.category " + 
+        "  FROM " + 
+        "	  (preventive_maintenance_work_order w JOIN division d ON w.Division_ID = d.Division_ID AND w.PM_Work_Order_ID = ?) " + 
+        "  ) WO " + 
+        "  LEFT JOIN " + 
+        "    asset A " + 
+        "  ON " + 
+        "  A.asset_id = WO.asset_id";
+        
+        PreparedStatement stmt = connection.prepareStatement(sql);
+        stmt.setString(1,workorder_id);
+        ResultSet rec = stmt.executeQuery();
+        if(rec.first()){ 
+            asset_id = rec.getString("Asset_ID");
+            created_date = rec.getString("Created_Date");
+            creater = rec.getString("Creater");
+            promised_date = rec.getString("Promised_Date"); 
+            started_date = rec.getString("Started_Date"); 
+            done_date = rec.getString("Done_Date");
+            total_cost = rec.getString("Total_Cost");
+            customer = rec.getString("Customer");
+            remarks = rec.getString("Remarks");
+            customer_id = rec.getString("Division_ID");
+            description = rec.getString("Description");
+            type = rec.getString("type");
+            category = rec.getString("category");
+            model = rec.getString("model_id");
+        }
+        else{
+            throw new Exception("Job not found.");
+        }
+    }
+    
+    private String getNewWorkOrderNo(){
+        /**YY/XXXX*/
+        String serial = "";
+        String dbYY = "";
+        /**Get system Year*/
+        String systemYY = String.valueOf(Calendar.getInstance().get(Calendar.YEAR)).substring(2);
+                
+        String sql = "SELECT MAX(PM_Work_Order_ID) FROM preventive_maintenance_work_order ";
+        
+        
+        String work_order = "";
+        try{
+            ResultSet rec = connection.createStatement().executeQuery(sql);
+            rec.next();
+            String value = rec.getString(1);
+            
+            dbYY = value.toString().substring(0,2);
+            serial = value.toString().substring(3);
+            
+            /**WorkOrders exist*/
+            if(dbYY.equals(systemYY)){
+                work_order = dbYY + "/" + Utilities.get4DigitFigure(Integer.parseInt(serial)+1);
+            }
+            /**New WorkoOrder year*/
+            else{
+                work_order = systemYY + "/" + "0001";
+            }
+            return work_order;
+        }
+        catch(Exception er){
+            //Very First Entry only.
+            try {
+                Properties pro = Utilities.getProperties("conf/common.inf");
+                return pro.getProperty("NEXT_WORKORDER_NO");
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                return systemYY + "/0001";
+            }
+        }
+        
+    } 
+}

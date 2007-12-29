@@ -1,0 +1,6 @@
+#---Database Connection Information---
+#Fri Mar 16 17:34:02 IST 2007
+URL=jdbc\:mysql\://192.168.0.17/matrixfocus
+DRIVER=com.mysql.jdbc.Driver
+USERNAME=matrixfocus
+PASSWORD=matrixit
