@@ -42,8 +42,7 @@ public class DLGMaintenanceCategory extends JDialog{
     private JFrame frame;
     private Connection connection;
     private MessageBar messageBar;
-    /** Check in update*/
-    /** Check in update*/
+
     public DLGMaintenanceCategory(JFrame parent, Connection con, MessageBar msgBar){
         super(parent,"Maintenance Category",true);
         frame = parent;
