@@ -1,6 +1,0 @@
-#---E-Mail Server Information---
-#Thu Mar 08 14:10:16 IST 2007
-SMTP_AUTH_NAME=loadstar
-MAIL_SERVER=192.168.0.1
-SMTP_AUTH_PASS=matrixit
-MAIL_FROM_ADDRESS=focus@loadstar.lk
